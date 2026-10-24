@@ -9,7 +9,7 @@
   <img alt="Licencia" src="https://img.shields.io/badge/Licencia-GPL--3.0-3A4660">
 </p>
 
-Tres casos de aprendizaje supervisado desarrollados de principio a fin con la metodología **CRISP-DM**: entender el problema, limpiar y preparar los datos, comparar modelos con métricas objetivas y traducir el resultado en una conclusión accionable.
+Casos de aprendizaje supervisado desarrollados de principio a fin con la metodología **CRISP-DM**: entender el problema, limpiar y preparar los datos, comparar modelos con métricas objetivas y traducir el resultado en una conclusión accionable.
 
 > El mismo criterio que aplico en mejora continua: **medir antes de decidir**. Cada modelo se evalúa con datos que no vio durante el entrenamiento, y la elección final se justifica con números.
 
@@ -22,6 +22,7 @@ Tres casos de aprendizaje supervisado desarrollados de principio a fin con la me
 | 01 | [Precio de automóviles](notebooks/01-precio-automoviles.ipynb) | Regresión | Regresión lineal, KNN, Random Forest, XGBoost | **XGBoost · R² 0.888 · MAE $1,222** |
 | 02 | [Consumo de combustible (MPG)](notebooks/02-consumo-combustible-mpg.ipynb) | Regresión | Lineal, Árbol, Random Forest, KNN, SVR, XGBoost | **Random Forest · R² 0.884 · RMSE 2.58 MPG** |
 | 03 | [Diagnóstico de cáncer de mama](notebooks/03-cancer-mama-knn.ipynb) | Clasificación | KNN Classifier | **Accuracy 95.6 % · F1 0.96** |
+| 04 | [Forecasting de demanda retail](notebooks/04-forecasting-demanda-retail.ipynb) | Series de tiempo | Baseline, SARIMA, Random Forest, XGBoost | **XGBoost · MAE 595 unidades/día · MAPE 0.81 %** |
 
 ---
 
@@ -76,6 +77,28 @@ Tres casos de aprendizaje supervisado desarrollados de principio a fin con la me
 
 ---
 
+## 04 · Forecasting de demanda retail
+
+**Pregunta de negocio:** ¿cuánto se va a vender cada día? La respuesta alimenta compras, inventario y personal.
+
+**Datos:** dataset sintético de ventas diarias por tienda y producto, 2019–2023 — 4.56 millones de registros con precio y promociones (archivo `retail_sales.csv`, no incluido por su tamaño).
+
+**Qué hice**
+- Agregación a serie diaria, media móvil y descomposición en tendencia, estacionalidad y residuo.
+- Prueba de estacionariedad (ADF) y autocorrelación (ACF/PACF): patrón semanal muy marcado, cada 7 días.
+- Elasticidad precio: la demanda resultó inelástica (coeficiente ≈ −0.05).
+- Ingeniería de variables de calendario, rezagos (1, 7 y 30 días) y medias móviles **calculadas solo con días anteriores**, para que el modelo no use información que no tendría al momento de predecir.
+- Validación temporal: los últimos 90 días quedan fuera del entrenamiento.
+- Pronóstico recursivo diario para 2024–2025.
+
+<img src="assets/resultados-forecasting.png" alt="Comparación del error MAE entre Baseline, SARIMA, Random Forest y XGBoost" width="720">
+
+**Hallazgo clave:** los modelos de árboles con rezagos superan ampliamente a la referencia ingenua y a SARIMA. Al agregar miles de series tienda-producto el ruido se compensa y la serie diaria se vuelve muy predecible.
+
+**Lectura honesta de la comparación:** XGBoost y Random Forest predicen un día a la vez conociendo las ventas reales del día anterior, mientras SARIMA proyecta los 90 días de una sola vez; por eso la diferencia es tan grande. Además, el modelo usa el porcentaje de productos en promoción y el precio del mismo día, lo cual supone que las promociones se planifican con anticipación.
+
+---
+
 ## 🗂️ Estructura
 
 ```
@@ -83,7 +106,8 @@ portafolio-machine-learning/
 ├── notebooks/
 │   ├── 01-precio-automoviles.ipynb
 │   ├── 02-consumo-combustible-mpg.ipynb
-│   └── 03-cancer-mama-knn.ipynb
+│   ├── 03-cancer-mama-knn.ipynb
+│   └── 04-forecasting-demanda-retail.ipynb
 ├── assets/            # banner y gráficos del README
 ├── requirements.txt
 └── LICENSE
@@ -98,7 +122,7 @@ pip install -r requirements.txt
 jupyter lab
 ```
 
-El notebook 01 descarga sus datos automáticamente. Para el 02 y el 03, descarga `auto-mpg.csv` y `data.csv` de los enlaces indicados y colócalos junto al notebook (o súbelos a Google Colab).
+El notebook 01 descarga sus datos automáticamente. Para el 02 y el 03, descarga `auto-mpg.csv` y `data.csv` de los enlaces indicados y colócalos junto al notebook (o súbelos a Google Colab). El 04 necesita `retail_sales.csv` en la misma carpeta.
 
 ---
 
